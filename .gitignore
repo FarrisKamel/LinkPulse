@@ -1,0 +1,38 @@
+# --- Secrets -----------------------------------------------------------
+# .env holds the real DATABASE_URL and any API keys. Never commit it.
+# .env.example IS committed, so a new dev knows which vars to set.
+.env
+.env.*
+!.env.example
+
+# --- Python ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / Vite -------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# --- Playwright --------------------------------------------------------
+# Regenerated on every run; the CI uploads these as artifacts instead.
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# --- Editors / OS ------------------------------------------------------
+.DS_Store
+.vscode/
+.idea/
+*.swp
