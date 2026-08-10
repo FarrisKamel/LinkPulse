@@ -1,0 +1,35 @@
+# LinkPulse local development stack.
+# LP-3a: Postgres only. LP-3b will add `backend` and `frontend` services.
+#
+# Compose reads the sibling .env file for ${VAR} substitution below.
+# Start it with:  docker compose up -d
+# Stop it with:   docker compose down   (add -v to also wipe the data volume)
+
+services:
+  db:
+    image: postgres:16
+    container_name: linkpulse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # host:container — publishes Postgres to localhost:5432 so the
+      # host-run backend and Alembic (LP-2) can connect.
+      - "5432:5432"
+    volumes:
+      # Named volume persists data across `down`/`up`. Survives until
+      # explicitly removed with `docker compose down -v`.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready reports true only once Postgres accepts connections,
+      # not merely when the container has started. LP-3b's backend will
+      # wait on this via `depends_on: condition: service_healthy`.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
