@@ -31,5 +31,42 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    container_name: linkpulse-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Inside the compose network the database host is the service name `db`,
+      # NOT localhost. This overrides the .env DATABASE_URL (which targets
+      # localhost, for host-run dev). Reuses the same POSTGRES_* credentials.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind-mount source for hot-reload; the anonymous volume masks the host's
+      # macOS .venv so it cannot shadow the image's Linux-installed deps.
+      - ./backend:/app
+      - /app/.venv
+    # Apply migrations once the DB is healthy, then start the reloading server.
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build: ./frontend
+    container_name: linkpulse-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      # Same pattern: mount source, mask host node_modules (macOS binaries)
+      # with a container-managed volume.
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+
 volumes:
   pgdata:

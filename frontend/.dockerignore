@@ -1,0 +1,5 @@
+# node_modules holds macOS-built native binaries (esbuild/rollup) — never
+# copy them into a Linux image; npm ci rebuilds them inside the container.
+node_modules
+dist
+.vite
