@@ -53,3 +53,6 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Put the backend root on sys.path so `import app` resolves during collection
+# regardless of how pytest rewrites sys.path[0].
+pythonpath = ["."]
