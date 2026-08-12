@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class TagRead(BaseModel):
@@ -13,6 +13,25 @@ class TagRead(BaseModel):
     id: uuid.UUID
     name: str
     color: str
+
+
+class TagWithCount(BaseModel):
+    """A tag plus how many (non-deleted) bookmarks use it."""
+
+    id: uuid.UUID
+    name: str
+    color: str
+    bookmark_count: int
+
+
+class TagCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=50)
+    color: str = "#6366f1"
+
+
+class TagUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=50)
+    color: str | None = None
 
 
 class BookmarkCreate(BaseModel):

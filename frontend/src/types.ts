@@ -6,6 +6,10 @@ export interface Tag {
   color: string
 }
 
+export interface TagWithCount extends Tag {
+  bookmark_count: number
+}
+
 export interface Bookmark {
   id: string
   url: string

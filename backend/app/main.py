@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 
 from app.config import settings
-from app.routers import bookmarks
+from app.routers import bookmarks, tags
 
 app = FastAPI(title="LinkPulse API")
 
 app.include_router(bookmarks.router)
+app.include_router(tags.router)
 
 # Test-only DB reset endpoint, mounted only when explicitly enabled.
 if settings.testing:
