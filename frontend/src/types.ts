@@ -28,3 +28,12 @@ export interface BookmarkList {
   limit: number
   offset: number
 }
+
+export interface BookmarkPreview {
+  url: string
+  domain: string | null
+  title: string | null
+  description: string | null
+  og_image_url: string | null
+  favicon_url: string | null
+}

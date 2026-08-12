@@ -79,6 +79,28 @@ async def test_create_invalid_url_returns_422(client: AsyncClient) -> None:
     assert resp.status_code == 422
 
 
+async def test_create_with_tags_attaches_them(client: AsyncClient) -> None:
+    resp = await client.post(
+        "/api/bookmarks",
+        json={"url": "https://tagged.test", "tags": ["red", "blue"]},
+    )
+    assert resp.status_code == 201
+    assert {t["name"] for t in resp.json()["tags"]} == {"red", "blue"}
+
+
+async def test_preview_returns_metadata_without_saving(client: AsyncClient) -> None:
+    resp = await client.post(
+        "/api/bookmarks/preview", json={"url": "https://example.com"}
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["title"] == "Fake Title"  # from the fake fetcher
+    assert body["domain"] == "example.com"
+    # Nothing was persisted.
+    listing = await client.get("/api/bookmarks")
+    assert listing.json()["total"] == 0
+
+
 # --- GET /api/bookmarks (list) ---------------------------------------------
 
 

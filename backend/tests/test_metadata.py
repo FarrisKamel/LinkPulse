@@ -1,4 +1,19 @@
-from app.services.metadata import parse_metadata
+import pytest
+
+from app.services.metadata import _host_is_safe, parse_metadata
+
+
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        ("127.0.0.1", False),  # loopback
+        ("10.0.0.1", False),  # private
+        ("169.254.169.254", False),  # link-local / cloud metadata
+        ("8.8.8.8", True),  # public
+    ],
+)
+async def test_host_is_safe_blocks_internal(host: str, expected: bool) -> None:
+    assert await _host_is_safe(host) is expected
 
 SAMPLE_HTML = """
 <html>

@@ -1,11 +1,42 @@
+import asyncio
+import ipaddress
+import socket
 from dataclasses import dataclass
 from typing import Protocol
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup, Tag
 
 _USER_AGENT = "LinkPulseBot/0.1 (+https://github.com/FarrisKamel/LinkPulse)"
+_MAX_REDIRECTS = 5
+
+
+async def _host_is_safe(host: str) -> bool:
+    """SSRF guard: reject hosts that resolve to a private, loopback,
+    link-local, reserved, multicast, or unspecified address. Without this the
+    scraper could be pointed at internal services (e.g. the cloud metadata
+    endpoint at 169.254.169.254). Runs the blocking DNS lookup off the loop."""
+
+    def _check() -> bool:
+        try:
+            infos = socket.getaddrinfo(host, None)
+        except socket.gaierror:
+            return False
+        for info in infos:
+            ip = ipaddress.ip_address(info[4][0])
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_link_local
+                or ip.is_reserved
+                or ip.is_multicast
+                or ip.is_unspecified
+            ):
+                return False
+        return True
+
+    return await asyncio.to_thread(_check)
 
 
 @dataclass
@@ -104,14 +135,30 @@ class HttpxMetadataFetcher:
         self._timeout = timeout
 
     async def fetch(self, url: str) -> PageMetadata:
+        # Follow redirects manually so every hop's host is SSRF-checked before
+        # a request is made (a public URL could otherwise redirect internally).
         try:
             async with httpx.AsyncClient(
-                follow_redirects=True,
+                follow_redirects=False,
                 timeout=self._timeout,
                 headers={"User-Agent": _USER_AGENT},
             ) as client:
-                resp = await client.get(url)
-                resp.raise_for_status()
+                current = url
+                for _ in range(_MAX_REDIRECTS + 1):
+                    host = urlparse(current).hostname
+                    if not host or not await _host_is_safe(host):
+                        return PageMetadata()
+                    resp = await client.get(current)
+                    if resp.is_redirect:
+                        location = resp.headers.get("location")
+                        if not location:
+                            return PageMetadata()  # malformed redirect
+                        current = str(httpx.URL(current).join(location))
+                        continue
+                    resp.raise_for_status()
+                    break
+                else:
+                    return PageMetadata()  # too many redirects
         except httpx.HTTPError:
             return PageMetadata()
 

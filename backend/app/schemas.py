@@ -19,10 +19,24 @@ class BookmarkCreate(BaseModel):
     """Request body for POST /api/bookmarks.
 
     HttpUrl validates the string is a real http(s) URL — invalid input is
-    rejected with a 422 before any handler code runs.
+    rejected with a 422 before any handler code runs. Tags (by name) are
+    attached on create, get-or-created as needed.
     """
 
     url: HttpUrl
+    tags: list[str] = []
+
+
+class BookmarkPreview(BaseModel):
+    """Scraped metadata for a URL, returned by the preview endpoint without
+    saving anything. Powers the "Fetch" step in the Add Bookmark modal."""
+
+    url: str
+    domain: str | None
+    title: str | None
+    description: str | None
+    og_image_url: str | None
+    favicon_url: str | None
 
 
 class BookmarkRead(BaseModel):
