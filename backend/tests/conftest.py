@@ -18,10 +18,27 @@ from app.services.metadata import PageMetadata, get_metadata_fetcher
 # In CI, DATABASE_URL points at the linkpulse_test service. Locally it defaults
 # to a linkpulse_test database on the dev Postgres — never the dev database, so
 # tests can freely drop/recreate tables without touching real data.
-TEST_DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+asyncpg://linkpulse:linkpulse@localhost:5432/linkpulse_test",
+_DEFAULT_TEST_URL = (
+    "postgresql+asyncpg://linkpulse:linkpulse@localhost:5432/linkpulse_test"
 )
+
+
+def _require_test_db(url: str) -> str:
+    """Safety guard: the fixtures drop_all/create_all, so refuse to run against
+    any database whose name doesn't end in '_test'. Prevents a stray
+    DATABASE_URL (dev/prod) from wiping real data (Greptile P1, PR #10)."""
+    db_name = url.rsplit("/", 1)[-1].split("?", 1)[0]
+    if not db_name.endswith("_test"):
+        raise RuntimeError(
+            f"Refusing to run the test suite against database {db_name!r}: "
+            "its name must end with '_test'. The fixtures drop and recreate "
+            "all tables, so pointing DATABASE_URL at a non-test database would "
+            "destroy its data."
+        )
+    return url
+
+
+TEST_DATABASE_URL = _require_test_db(os.environ.get("DATABASE_URL", _DEFAULT_TEST_URL))
 
 
 class FakeFetcher:
