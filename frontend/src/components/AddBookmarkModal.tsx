@@ -44,7 +44,14 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
 
   function handleSave() {
     if (!url.trim()) return
-    create.mutate({ url: url.trim(), tags }, { onSuccess: onClose })
+    // Include a tag that was typed but not yet committed with Enter.
+    const pending = tagInput.trim()
+    const finalTags =
+      pending && !tags.includes(pending) ? [...tags, pending] : tags
+    create.mutate(
+      { url: url.trim(), tags: finalTags },
+      { onSuccess: onClose },
+    )
   }
 
   const meta = preview.data
@@ -79,7 +86,11 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
             ref={urlRef}
             type="url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              // Drop a stale preview so it can't disagree with the URL saved.
+              if (preview.data || preview.isError) preview.reset()
+            }}
             placeholder="https://example.com"
             className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           />
