@@ -7,5 +7,7 @@ export default defineConfig({
   test: {
     // jsdom gives tests a browser-like DOM to render components into.
     environment: 'jsdom',
+    // Runs cleanup() after each test so renders don't leak across tests.
+    setupFiles: ['./src/test/setup.ts'],
   },
 })
