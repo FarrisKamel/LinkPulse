@@ -30,9 +30,13 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
   }, [onClose])
 
   function toggleStar() {
+    if (update.isPending) return // avoid overlapping, out-of-order updates
     const next = !starred
     setStarred(next)
-    update.mutate({ id: bookmark.id, patch: { is_starred: next } })
+    update.mutate(
+      { id: bookmark.id, patch: { is_starred: next } },
+      { onError: () => setStarred(!next) }, // revert optimistic change on failure
+    )
   }
 
   function addTag() {
@@ -112,6 +116,7 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
               <button
                 type="button"
                 onClick={toggleStar}
+                disabled={update.isPending}
                 aria-label={starred ? 'Unstar' : 'Star'}
                 className={starred ? 'text-amber-400' : 'text-slate-300'}
               >
@@ -196,6 +201,11 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
         </div>
 
         <footer className="space-y-3 border-t border-slate-200 px-5 py-4">
+          {update.isError && (
+            <p className="text-sm text-red-600">
+              Couldn't save changes. Please try again.
+            </p>
+          )}
           <div className="flex justify-end gap-2">
             <button
               type="button"
