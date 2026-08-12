@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
@@ -46,3 +47,22 @@ class BookmarkRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     tags: list[TagRead] = []
+
+
+class SortField(Enum):
+    """Allowed sort options for the bookmark list. An out-of-range value is
+    rejected with a 422 automatically. Plain Enum (not str-based) so the member
+    named `title` doesn't collide with str.title()."""
+
+    created_at = "created_at"  # newest first (default)
+    title = "title"  # A→Z
+
+
+class BookmarkList(BaseModel):
+    """Paginated envelope for GET /api/bookmarks. `total` counts all matching
+    bookmarks ignoring limit/offset — what the UI needs for page controls."""
+
+    items: list[BookmarkRead]
+    total: int
+    limit: int
+    offset: int

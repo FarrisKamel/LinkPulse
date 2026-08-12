@@ -1,15 +1,15 @@
 from typing import Annotated
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db import get_session
-from app.models import Bookmark
-from app.schemas import BookmarkCreate, BookmarkRead
+from app.models import Bookmark, Tag
+from app.schemas import BookmarkCreate, BookmarkList, BookmarkRead, SortField
 from app.services.metadata import MetadataFetcher, get_metadata_fetcher
 
 router = APIRouter(prefix="/api/bookmarks", tags=["bookmarks"])
@@ -65,3 +65,49 @@ async def create_bookmark(
     )
     assert loaded is not None  # just-committed row is guaranteed present
     return loaded
+
+
+@router.get("", response_model=BookmarkList)
+async def list_bookmarks(
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    starred: Annotated[bool | None, Query()] = None,
+    search: Annotated[str | None, Query()] = None,
+    tag: Annotated[str | None, Query()] = None,
+    sort: SortField = SortField.created_at,
+) -> BookmarkList:
+    # Filters applied identically to the count and the page query so they
+    # never disagree. Soft-deleted rows are always excluded.
+    conditions: list[ColumnElement[bool]] = [Bookmark.is_deleted.is_(False)]
+    if starred is not None:
+        conditions.append(Bookmark.is_starred.is_(starred))
+    if search:
+        like = f"%{search}%"
+        conditions.append(
+            or_(Bookmark.title.ilike(like), Bookmark.description.ilike(like))
+        )
+    if tag:
+        # EXISTS subquery — no explicit join to complicate the count query.
+        conditions.append(Bookmark.tags.any(Tag.name == tag))
+
+    total = await session.scalar(
+        select(func.count()).select_from(Bookmark).where(*conditions)
+    )
+
+    order = (
+        Bookmark.title.asc()
+        if sort is SortField.title
+        else Bookmark.created_at.desc()
+    )
+    rows = await session.scalars(
+        select(Bookmark)
+        .where(*conditions)
+        .options(selectinload(Bookmark.tags))
+        .order_by(order)
+        .limit(limit)
+        .offset(offset)
+    )
+
+    items = [BookmarkRead.model_validate(b) for b in rows.all()]
+    return BookmarkList(items=items, total=total or 0, limit=limit, offset=offset)
