@@ -23,6 +23,7 @@ dev = [
     "mypy>=1.11",
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
     # httpx is now a runtime dependency (the app fetches with it); tests reuse it.
     "types-beautifulsoup4>=4.12",
 ]
@@ -59,3 +60,10 @@ testpaths = ["tests"]
 # Put the backend root on sys.path so `import app` resolves during collection
 # regardless of how pytest rewrites sys.path[0].
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]
+# SQLAlchemy's async engine executes inside greenlets; without this, coverage
+# loses the trace on every `await session.…` and reports endpoint bodies as
+# uncovered even though they ran.
+concurrency = ["greenlet", "thread"]

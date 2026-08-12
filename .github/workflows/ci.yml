@@ -31,7 +31,7 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: mypy app tests
-      - run: pytest -q
+      - run: pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/linkpulse_test
 
