@@ -23,8 +23,10 @@ function make(overrides: Partial<Bookmark> = {}): Bookmark {
   }
 }
 
+const noop = () => {}
+
 test('renders the title and domain', () => {
-  render(<BookmarkCard bookmark={make()} onOpen={() => {}} />)
+  render(<BookmarkCard bookmark={make()} onOpen={noop} onFilterTag={noop} />)
   expect(screen.getByText('Example')).toBeTruthy()
   expect(screen.getByText('example.com')).toBeTruthy()
 })
@@ -32,22 +34,33 @@ test('renders the title and domain', () => {
 test('clicking the card calls onOpen with the bookmark', () => {
   const onOpen = vi.fn()
   const bookmark = make()
-  render(<BookmarkCard bookmark={bookmark} onOpen={onOpen} />)
-  fireEvent.click(screen.getByRole('button'))
+  render(
+    <BookmarkCard bookmark={bookmark} onOpen={onOpen} onFilterTag={noop} />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: /Example/ }))
   expect(onOpen).toHaveBeenCalledWith(bookmark)
 })
 
-test('renders tag chips', () => {
+test('clicking a tag calls onFilterTag with the tag name', () => {
+  const onFilterTag = vi.fn()
   render(
     <BookmarkCard
       bookmark={make({ tags: [{ id: 't1', name: 'python', color: '#3572A5' }] })}
-      onOpen={() => {}}
+      onOpen={noop}
+      onFilterTag={onFilterTag}
     />,
   )
-  expect(screen.getByText('python')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'python' }))
+  expect(onFilterTag).toHaveBeenCalledWith('python')
 })
 
 test('marks a starred bookmark', () => {
-  render(<BookmarkCard bookmark={make({ is_starred: true })} onOpen={() => {}} />)
+  render(
+    <BookmarkCard
+      bookmark={make({ is_starred: true })}
+      onOpen={noop}
+      onFilterTag={noop}
+    />,
+  )
   expect(screen.getByLabelText('Starred')).toBeTruthy()
 })
