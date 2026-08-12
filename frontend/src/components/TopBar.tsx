@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 
 interface TopBarProps {
   /** Open the mobile sidebar drawer (hamburger button). */
@@ -8,8 +9,39 @@ interface TopBarProps {
 }
 
 function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
-  // Local search state for now; LP-13 lifts this to drive the bookmark query.
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlSearch = searchParams.get('search') ?? ''
+  const [term, setTerm] = useState(urlSearch)
+  // Tracks the last value we wrote to the URL, so the sync-from-URL effect
+  // below can tell an external navigation apart from our own debounced write.
+  const lastWritten = useRef(urlSearch)
+
+  // Debounce: push the term into the URL's ?search= 300ms after typing stops,
+  // so the bookmark query isn't refetched on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      lastWritten.current = term
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (term) next.set('search', term)
+          else next.delete('search')
+          return next
+        },
+        { replace: true },
+      )
+    }, 300)
+    return () => clearTimeout(id)
+  }, [term, setSearchParams])
+
+  // Keep the input in sync when the URL changes externally (back/forward).
+  // Guarded by lastWritten so in-progress typing isn't clobbered.
+  useEffect(() => {
+    if (urlSearch !== lastWritten.current) {
+      lastWritten.current = urlSearch
+      setTerm(urlSearch)
+    }
+  }, [urlSearch])
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
@@ -32,8 +64,8 @@ function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
 
       <input
         type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        value={term}
+        onChange={(e) => setTerm(e.target.value)}
         placeholder="Search bookmarks…"
         className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
       />

@@ -24,9 +24,10 @@ function StarIcon({ filled }: { filled: boolean }) {
 interface BookmarkCardProps {
   bookmark: Bookmark
   onOpen: (bookmark: Bookmark) => void
+  onFilterTag: (name: string) => void
 }
 
-function BookmarkCard({ bookmark, onOpen }: BookmarkCardProps) {
+function BookmarkCard({ bookmark, onOpen, onFilterTag }: BookmarkCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   // Recover if the image URL changes (e.g. after an edit) — a stale failure
   // from a previous URL shouldn't keep hiding a now-valid thumbnail.
@@ -38,68 +39,76 @@ function BookmarkCard({ bookmark, onOpen }: BookmarkCardProps) {
   const showImage = bookmark.og_image_url && !imageFailed
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(bookmark)}
-      className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-    >
-      <div className="aspect-video bg-slate-100">
-        {showImage ? (
-          <img
-            src={bookmark.og_image_url ?? undefined}
-            alt=""
-            loading="lazy"
-            onError={() => setImageFailed(true)}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-3xl font-semibold text-slate-300">
-            {fallbackChar}
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <span className="line-clamp-2 font-medium text-slate-900">
-            {title}
-          </span>
-          <span
-            className={bookmark.is_starred ? 'text-amber-400' : 'text-slate-300'}
-            aria-label={bookmark.is_starred ? 'Starred' : 'Not starred'}
-          >
-            <StarIcon filled={bookmark.is_starred} />
-          </span>
+    <article className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      {/* Main clickable area opens the detail drawer. Tags are separate filter
+          buttons below, so they aren't nested inside this button. */}
+      <button
+        type="button"
+        onClick={() => onOpen(bookmark)}
+        className="flex flex-1 flex-col text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500/40"
+      >
+        <div className="aspect-video bg-slate-100">
+          {showImage ? (
+            <img
+              src={bookmark.og_image_url ?? undefined}
+              alt=""
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-3xl font-semibold text-slate-300">
+              {fallbackChar}
+            </div>
+          )}
         </div>
 
-        {bookmark.domain && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            {bookmark.favicon_url && (
-              <img
-                src={bookmark.favicon_url}
-                alt=""
-                className="h-4 w-4 rounded"
-              />
-            )}
-            <span className="truncate">{bookmark.domain}</span>
+        <div className="flex flex-col gap-2 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <span className="line-clamp-2 font-medium text-slate-900">
+              {title}
+            </span>
+            <span
+              className={
+                bookmark.is_starred ? 'text-amber-400' : 'text-slate-300'
+              }
+              aria-label={bookmark.is_starred ? 'Starred' : 'Not starred'}
+            >
+              <StarIcon filled={bookmark.is_starred} />
+            </span>
           </div>
-        )}
 
-        {bookmark.tags.length > 0 && (
-          <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-            {bookmark.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-              >
-                {tag.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </button>
+          {bookmark.domain && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              {bookmark.favicon_url && (
+                <img
+                  src={bookmark.favicon_url}
+                  alt=""
+                  className="h-4 w-4 rounded"
+                />
+              )}
+              <span className="truncate">{bookmark.domain}</span>
+            </div>
+          )}
+        </div>
+      </button>
+
+      {bookmark.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-4 pb-4">
+          {bookmark.tags.map((tag) => (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() => onFilterTag(tag.name)}
+              className="rounded-full px-2 py-0.5 text-xs font-medium hover:ring-1 hover:ring-inset"
+              style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+            >
+              {tag.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </article>
   )
 }
 

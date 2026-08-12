@@ -38,6 +38,9 @@ async function apiSend<T>(
 export interface BookmarkListParams {
   limit?: number
   offset?: number
+  search?: string
+  tag?: string
+  starred?: boolean
 }
 
 export async function fetchBookmarks(
@@ -46,6 +49,9 @@ export async function fetchBookmarks(
   const search = new URLSearchParams()
   if (params.limit != null) search.set('limit', String(params.limit))
   if (params.offset != null) search.set('offset', String(params.offset))
+  if (params.search) search.set('search', params.search)
+  if (params.tag) search.set('tag', params.tag)
+  if (params.starred) search.set('starred', 'true')
   const qs = search.toString()
   return apiGet<BookmarkList>(`/bookmarks${qs ? `?${qs}` : ''}`)
 }
