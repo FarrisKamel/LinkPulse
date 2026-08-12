@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { expect, test } from 'vitest'
@@ -5,14 +6,17 @@ import { expect, test } from 'vitest'
 import RootLayout from './RootLayout'
 
 function renderShell() {
+  const client = new QueryClient()
   render(
-    <MemoryRouter>
-      <Routes>
-        <Route element={<RootLayout />}>
-          <Route index element={<div>home</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <Routes>
+          <Route element={<RootLayout />}>
+            <Route index element={<div>home</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -31,12 +35,16 @@ test('renders topbar search and add button', () => {
 
 test('mobile menu toggle opens and closes the drawer', () => {
   renderShell()
-  // Closed initially: no backdrop.
   expect(screen.queryByLabelText('Close menu')).toBeNull()
-  // Hamburger opens it (backdrop appears).
   fireEvent.click(screen.getByLabelText('Open menu'))
   expect(screen.getByLabelText('Close menu')).toBeTruthy()
-  // Backdrop click closes it.
   fireEvent.click(screen.getByLabelText('Close menu'))
   expect(screen.queryByLabelText('Close menu')).toBeNull()
+})
+
+test('the add bookmark button opens the modal', () => {
+  renderShell()
+  expect(screen.queryByRole('dialog')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /add bookmark/i }))
+  expect(screen.getByRole('dialog')).toBeTruthy()
 })

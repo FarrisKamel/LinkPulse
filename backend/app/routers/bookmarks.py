@@ -14,6 +14,7 @@ from app.models import Bookmark, Tag
 from app.schemas import (
     BookmarkCreate,
     BookmarkList,
+    BookmarkPreview,
     BookmarkRead,
     BookmarkUpdate,
     SortField,
@@ -98,6 +99,8 @@ async def create_bookmark(
         og_image_url=meta.og_image_url,
         favicon_url=meta.favicon_url,
     )
+    if payload.tags:
+        bookmark.tags = await _resolve_tags(session, payload.tags)
     session.add(bookmark)
     try:
         await session.commit()
@@ -111,6 +114,24 @@ async def create_bookmark(
     loaded = await _load_with_tags(session, bookmark.id)
     assert loaded is not None  # just-committed row is guaranteed present
     return loaded
+
+
+@router.post("/preview", response_model=BookmarkPreview)
+async def preview_bookmark(
+    payload: BookmarkCreate,
+    fetcher: FetcherDep,
+) -> BookmarkPreview:
+    """Scrape a URL's metadata without saving — powers the modal's Fetch step."""
+    url = str(payload.url)
+    meta = await fetcher.fetch(url)
+    return BookmarkPreview(
+        url=url,
+        domain=urlparse(url).netloc or None,
+        title=meta.title,
+        description=meta.description,
+        og_image_url=meta.og_image_url,
+        favicon_url=meta.favicon_url,
+    )
 
 
 @router.get("", response_model=BookmarkList)

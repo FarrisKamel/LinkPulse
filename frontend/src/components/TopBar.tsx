@@ -3,9 +3,11 @@ import { useState } from 'react'
 interface TopBarProps {
   /** Open the mobile sidebar drawer (hamburger button). */
   onMenuClick: () => void
+  /** Open the Add Bookmark modal. */
+  onAddClick: () => void
 }
 
-function TopBar({ onMenuClick }: TopBarProps) {
+function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
   // Local search state for now; LP-13 lifts this to drive the bookmark query.
   const [search, setSearch] = useState('')
 
@@ -38,7 +40,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
 
       <button
         type="button"
-        // LP-11 wires this to the Add Bookmark modal.
+        onClick={onAddClick}
         className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
       >
         <span className="hidden sm:inline">Add Bookmark</span>
