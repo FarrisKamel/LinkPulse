@@ -104,7 +104,10 @@ async def list_bookmarks(
         select(Bookmark)
         .where(*conditions)
         .options(selectinload(Bookmark.tags))
-        .order_by(order)
+        # id is a unique tiebreaker: without it, rows sharing a title/created_at
+        # have undefined relative order, so offset paging could skip or repeat
+        # them across pages. (Greptile P1, PR #8.)
+        .order_by(order, Bookmark.id.asc())
         .limit(limit)
         .offset(offset)
     )
