@@ -41,7 +41,7 @@ async def list_tags(session: SessionDep) -> list[TagWithCount]:
 
 @router.post("", response_model=TagRead, status_code=status.HTTP_201_CREATED)
 async def create_tag(payload: TagCreate, session: SessionDep) -> Tag:
-    tag = Tag(name=payload.name.strip(), color=payload.color)
+    tag = Tag(name=payload.name, color=payload.color)
     session.add(tag)
     try:
         await session.commit()
@@ -64,7 +64,7 @@ async def update_tag(
 
     data = payload.model_dump(exclude_unset=True)
     if data.get("name") is not None:
-        tag.name = data["name"].strip()
+        tag.name = data["name"]
     if data.get("color") is not None:
         tag.color = data["color"]
 

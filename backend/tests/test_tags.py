@@ -16,6 +16,11 @@ async def test_create_and_list_tags(client: AsyncClient) -> None:
     assert tags[0]["bookmark_count"] == 0
 
 
+async def test_blank_tag_name_rejected(client: AsyncClient) -> None:
+    resp = await client.post("/api/tags", json={"name": "   "})
+    assert resp.status_code == 422
+
+
 async def test_create_duplicate_tag_returns_409(client: AsyncClient) -> None:
     await client.post("/api/tags", json={"name": "dup"})
     resp = await client.post("/api/tags", json={"name": "dup"})

@@ -8,6 +8,12 @@ import {
   updateBookmark,
 } from '../api/bookmarks'
 
+// Bookmark writes can change tags and their counts, so refresh both lists.
+function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+  queryClient.invalidateQueries({ queryKey: ['tags'] })
+}
+
 export function usePreviewBookmark() {
   return useMutation({ mutationFn: previewBookmark })
 }
@@ -16,11 +22,7 @@ export function useCreateBookmark() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: createBookmark,
-    onSuccess: () => {
-      // Invalidate every bookmarks query (all pages/filters) so the list
-      // refetches and the new bookmark shows up.
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-    },
+    onSuccess: () => invalidate(queryClient),
   })
 }
 
@@ -29,9 +31,7 @@ export function useUpdateBookmark() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateBookmarkInput }) =>
       updateBookmark(id, patch),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-    },
+    onSuccess: () => invalidate(queryClient),
   })
 }
 
@@ -39,8 +39,6 @@ export function useDeleteBookmark() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteBookmark,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-    },
+    onSuccess: () => invalidate(queryClient),
   })
 }
