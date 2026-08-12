@@ -8,6 +8,8 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup, Tag
 
+from app.config import settings
+
 _USER_AGENT = "LinkPulseBot/0.1 (+https://github.com/FarrisKamel/LinkPulse)"
 _MAX_REDIRECTS = 5
 
@@ -168,6 +170,18 @@ class HttpxMetadataFetcher:
         return parse_metadata(resp.text, base_url=str(resp.url))
 
 
+class StubMetadataFetcher:
+    """Deterministic, offline fetcher for the E2E stack — derives metadata from
+    the URL so tests don't depend on live websites (forward-risk F-1)."""
+
+    async def fetch(self, url: str) -> PageMetadata:
+        host = urlparse(url).hostname or url
+        return PageMetadata(title=f"Site: {host}", description=f"Preview for {host}")
+
+
 def get_metadata_fetcher() -> MetadataFetcher:
-    """FastAPI dependency provider. Overridden in tests to inject a fake."""
+    """FastAPI dependency provider. Overridden in unit tests to inject a fake;
+    the E2E stack sets FAKE_METADATA=1 to use the offline stub."""
+    if settings.fake_metadata:
+        return StubMetadataFetcher()
     return HttpxMetadataFetcher()

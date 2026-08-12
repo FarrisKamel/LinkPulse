@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
     database_url: str
+    # Test affordances — both default off, enabled only in the E2E stack.
+    fake_metadata: bool = False  # use a deterministic offline stub fetcher
+    testing: bool = False  # expose the /api/_test/reset endpoint
 
 
 settings = Settings()  # import-time instance; raises if DATABASE_URL is unset

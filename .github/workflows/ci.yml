@@ -57,19 +57,27 @@ jobs:
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
+      # Bring up the full stack (db + backend + frontend) with the stub fetcher
+      # and the test-reset endpoint enabled.
+      - name: Start the test stack
+        run: docker compose -f docker-compose.test.yml up -d --build
+      - name: Wait for the stack to be ready
+        run: |
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:8000/api/health && break; sleep 2; done
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:5173/ && break; sleep 2; done
+          curl -sf http://localhost:8000/api/health
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      # The Playwright config starts the frontend dev server itself, so this
-      # job needs the frontend's deps installed as well as e2e's.
-      - run: npm ci
-        working-directory: frontend
       - run: npm ci
         working-directory: e2e
       - run: npx playwright install --with-deps chromium
         working-directory: e2e
       - run: npx playwright test
         working-directory: e2e
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.test.yml logs
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
