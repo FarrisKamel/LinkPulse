@@ -49,6 +49,16 @@ class BookmarkRead(BaseModel):
     tags: list[TagRead] = []
 
 
+class BookmarkUpdate(BaseModel):
+    """Partial update for PATCH /api/bookmarks/{id}. Every field is optional;
+    only fields actually present in the request body are applied (detected via
+    model_dump(exclude_unset=True)). `tags` replaces the full tag set by name."""
+
+    notes: str | None = None
+    is_starred: bool | None = None
+    tags: list[str] | None = None
+
+
 class SortField(Enum):
     """Allowed sort options for the bookmark list. An out-of-range value is
     rejected with a 422 automatically. Plain Enum (not str-based) so the member
