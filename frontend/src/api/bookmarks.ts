@@ -11,11 +11,15 @@ async function apiGet<T>(path: string): Promise<T> {
   return resp.json() as Promise<T>
 }
 
-async function apiPost<T>(path: string, body: unknown): Promise<T> {
+async function apiSend<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
   const resp = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
   })
   if (!resp.ok) {
     // Surface the backend's error detail (e.g. the 409 duplicate message).
@@ -47,7 +51,7 @@ export async function fetchBookmarks(
 }
 
 export async function previewBookmark(url: string): Promise<BookmarkPreview> {
-  return apiPost<BookmarkPreview>('/bookmarks/preview', { url })
+  return apiSend<BookmarkPreview>('POST', '/bookmarks/preview', { url })
 }
 
 export interface CreateBookmarkInput {
@@ -58,5 +62,25 @@ export interface CreateBookmarkInput {
 export async function createBookmark(
   input: CreateBookmarkInput,
 ): Promise<Bookmark> {
-  return apiPost<Bookmark>('/bookmarks', input)
+  return apiSend<Bookmark>('POST', '/bookmarks', input)
+}
+
+export interface UpdateBookmarkInput {
+  notes?: string | null
+  is_starred?: boolean
+  tags?: string[]
+}
+
+export async function updateBookmark(
+  id: string,
+  patch: UpdateBookmarkInput,
+): Promise<Bookmark> {
+  return apiSend<Bookmark>('PATCH', `/bookmarks/${id}`, patch)
+}
+
+export async function deleteBookmark(id: string): Promise<void> {
+  const resp = await fetch(`${API_BASE}/bookmarks/${id}`, { method: 'DELETE' })
+  if (!resp.ok) {
+    throw new Error(`Delete failed with status ${resp.status}`)
+  }
 }

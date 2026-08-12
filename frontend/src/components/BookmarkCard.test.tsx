@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { expect, test } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { expect, test, vi } from 'vitest'
 
 import type { Bookmark } from '../types'
 import BookmarkCard from './BookmarkCard'
@@ -23,28 +23,31 @@ function make(overrides: Partial<Bookmark> = {}): Bookmark {
   }
 }
 
-test('renders title linking to the url, plus the domain', () => {
-  render(<BookmarkCard bookmark={make()} />)
-  const link = screen.getByRole('link', { name: 'Example' })
-  expect(link.getAttribute('href')).toBe('https://example.com/')
+test('renders the title and domain', () => {
+  render(<BookmarkCard bookmark={make()} onOpen={() => {}} />)
+  expect(screen.getByText('Example')).toBeTruthy()
   expect(screen.getByText('example.com')).toBeTruthy()
 })
 
-test('falls back to the domain when the title is missing', () => {
-  render(<BookmarkCard bookmark={make({ title: null })} />)
-  expect(screen.getByRole('link', { name: 'example.com' })).toBeTruthy()
+test('clicking the card calls onOpen with the bookmark', () => {
+  const onOpen = vi.fn()
+  const bookmark = make()
+  render(<BookmarkCard bookmark={bookmark} onOpen={onOpen} />)
+  fireEvent.click(screen.getByRole('button'))
+  expect(onOpen).toHaveBeenCalledWith(bookmark)
 })
 
 test('renders tag chips', () => {
   render(
     <BookmarkCard
       bookmark={make({ tags: [{ id: 't1', name: 'python', color: '#3572A5' }] })}
+      onOpen={() => {}}
     />,
   )
   expect(screen.getByText('python')).toBeTruthy()
 })
 
 test('marks a starred bookmark', () => {
-  render(<BookmarkCard bookmark={make({ is_starred: true })} />)
+  render(<BookmarkCard bookmark={make({ is_starred: true })} onOpen={() => {}} />)
   expect(screen.getByLabelText('Starred')).toBeTruthy()
 })

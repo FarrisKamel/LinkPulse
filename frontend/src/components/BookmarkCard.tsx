@@ -23,9 +23,10 @@ function StarIcon({ filled }: { filled: boolean }) {
 
 interface BookmarkCardProps {
   bookmark: Bookmark
+  onOpen: (bookmark: Bookmark) => void
 }
 
-function BookmarkCard({ bookmark }: BookmarkCardProps) {
+function BookmarkCard({ bookmark, onOpen }: BookmarkCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   // Recover if the image URL changes (e.g. after an edit) — a stale failure
   // from a previous URL shouldn't keep hiding a now-valid thumbnail.
@@ -37,7 +38,11 @@ function BookmarkCard({ bookmark }: BookmarkCardProps) {
   const showImage = bookmark.og_image_url && !imageFailed
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <button
+      type="button"
+      onClick={() => onOpen(bookmark)}
+      className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+    >
       <div className="aspect-video bg-slate-100">
         {showImage ? (
           <img
@@ -56,14 +61,9 @@ function BookmarkCard({ bookmark }: BookmarkCardProps) {
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <a
-            href={bookmark.url}
-            target="_blank"
-            rel="noreferrer"
-            className="line-clamp-2 font-medium text-slate-900 hover:text-indigo-600"
-          >
+          <span className="line-clamp-2 font-medium text-slate-900">
             {title}
-          </a>
+          </span>
           <span
             className={bookmark.is_starred ? 'text-amber-400' : 'text-slate-300'}
             aria-label={bookmark.is_starred ? 'Starred' : 'Not starred'}
@@ -99,7 +99,7 @@ function BookmarkCard({ bookmark }: BookmarkCardProps) {
           </div>
         )}
       </div>
-    </article>
+    </button>
   )
 }
 

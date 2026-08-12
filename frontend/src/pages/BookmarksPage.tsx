@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 
 import BookmarkCard from '../components/BookmarkCard'
+import BookmarkDetailDrawer from '../components/BookmarkDetailDrawer'
 import { useBookmarks } from '../hooks/useBookmarks'
+import type { Bookmark } from '../types'
 
 const GRID = 'mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
 const PAGE_SIZE = 20
@@ -20,6 +22,7 @@ function CardSkeleton() {
 
 function BookmarksPage() {
   const [offset, setOffset] = useState(0)
+  const [selected, setSelected] = useState<Bookmark | null>(null)
   const { data, isPending, isError, refetch } = useBookmarks({
     limit: PAGE_SIZE,
     offset,
@@ -74,9 +77,21 @@ function BookmarksPage() {
         <>
           <div className={GRID}>
             {data.items.map((bookmark) => (
-              <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+              <BookmarkCard
+                key={bookmark.id}
+                bookmark={bookmark}
+                onOpen={setSelected}
+              />
             ))}
           </div>
+
+          {selected && (
+            <BookmarkDetailDrawer
+              key={selected.id}
+              bookmark={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
 
           {hasPages && (
             <div className="mt-6 flex items-center justify-between text-sm text-slate-600">
