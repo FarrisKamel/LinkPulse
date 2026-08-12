@@ -1,37 +1,27 @@
-import { NavLink, Outlet } from 'react-router'
+import { useState } from 'react'
+import { Outlet } from 'react-router'
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  [
-    'rounded px-3 py-2 text-sm font-medium transition-colors',
-    isActive
-      ? 'bg-indigo-600 text-white'
-      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-  ].join(' ')
+import Sidebar from '../components/Sidebar'
+import TopBar from '../components/TopBar'
 
 /**
- * The app's layout route. Renders persistent chrome (the nav) plus an
- * <Outlet />, into which React Router mounts whichever child route matches
- * the current URL. LP-9 replaces this minimal nav with the real sidebar +
- * top bar; for now it's just enough to prove routing works.
+ * App shell: a fixed sidebar on desktop that collapses to a toggleable drawer
+ * on mobile, a top bar with search + Add Bookmark, and the routed page in the
+ * main area via <Outlet />.
  */
 function RootLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <nav className="flex items-center gap-2 border-b border-slate-200 bg-white px-6 py-3">
-        <span className="mr-4 text-lg font-bold text-indigo-600">LinkPulse</span>
-        <NavLink to="/" end className={navLinkClass}>
-          Bookmarks
-        </NavLink>
-        <NavLink to="/tags" className={navLinkClass}>
-          Tags
-        </NavLink>
-        <NavLink to="/dashboard" className={navLinkClass}>
-          Dashboard
-        </NavLink>
-      </nav>
-      <main className="px-6 py-8">
-        <Outlet />
-      </main>
+    <div className="min-h-screen bg-slate-50 text-slate-900 md:flex">
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="flex min-h-screen flex-1 flex-col">
+        <TopBar onMenuClick={() => setSidebarOpen(true)} />
+        <main className="flex-1 px-4 py-6 sm:px-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
