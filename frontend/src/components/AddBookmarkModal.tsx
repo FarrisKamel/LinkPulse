@@ -11,6 +11,7 @@ interface AddBookmarkModalProps {
 
 function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
   const [url, setUrl] = useState('')
+  const [fetchedUrl, setFetchedUrl] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const urlRef = useRef<HTMLInputElement>(null)
@@ -54,7 +55,10 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
     )
   }
 
-  const meta = preview.data
+  // Only show the preview while it still matches the URL in the field — a
+  // late in-flight response for an old URL must not render against a new one.
+  const meta =
+    preview.data && fetchedUrl === url.trim() ? preview.data : null
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
@@ -86,17 +90,19 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
             ref={urlRef}
             type="url"
             value={url}
-            onChange={(e) => {
-              setUrl(e.target.value)
-              // Drop a stale preview so it can't disagree with the URL saved.
-              if (preview.data || preview.isError) preview.reset()
-            }}
+            onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com"
             className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           />
           <button
             type="button"
-            onClick={() => url.trim() && preview.mutate(url.trim())}
+            onClick={() => {
+              const target = url.trim()
+              if (target) {
+                setFetchedUrl(target)
+                preview.mutate(target)
+              }
+            }}
             disabled={!url.trim() || preview.isPending}
             className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >

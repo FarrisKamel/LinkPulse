@@ -150,7 +150,10 @@ class HttpxMetadataFetcher:
                         return PageMetadata()
                     resp = await client.get(current)
                     if resp.is_redirect:
-                        current = str(httpx.URL(current).join(resp.headers["location"]))
+                        location = resp.headers.get("location")
+                        if not location:
+                            return PageMetadata()  # malformed redirect
+                        current = str(httpx.URL(current).join(location))
                         continue
                     resp.raise_for_status()
                     break
