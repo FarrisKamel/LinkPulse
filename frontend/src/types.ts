@@ -33,6 +33,31 @@ export interface BookmarkList {
   offset: number
 }
 
+export interface DomainCount {
+  domain: string
+  count: number
+}
+
+export interface DateCount {
+  date: string
+  count: number
+}
+
+export interface TagCount {
+  name: string
+  color: string
+  count: number
+}
+
+export interface Stats {
+  total_bookmarks: number
+  total_tags: number
+  bookmarks_this_week: number
+  top_domains: DomainCount[]
+  bookmarks_over_time: DateCount[]
+  tag_distribution: TagCount[]
+}
+
 export interface BookmarkPreview {
   url: string
   domain: string | null

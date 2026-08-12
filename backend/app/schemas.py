@@ -107,6 +107,33 @@ class BookmarkUpdate(BaseModel):
     tags: list[str] | None = None
 
 
+class DomainCount(BaseModel):
+    domain: str
+    count: int
+
+
+class DateCount(BaseModel):
+    date: str  # ISO date (YYYY-MM-DD)
+    count: int
+
+
+class TagCount(BaseModel):
+    name: str
+    color: str
+    count: int
+
+
+class Stats(BaseModel):
+    """Dashboard stats — GET /api/stats."""
+
+    total_bookmarks: int
+    total_tags: int
+    bookmarks_this_week: int
+    top_domains: list[DomainCount]
+    bookmarks_over_time: list[DateCount]
+    tag_distribution: list[TagCount]
+
+
 class SortField(Enum):
     """Allowed sort options for the bookmark list. An out-of-range value is
     rejected with a 422 automatically. Plain Enum (not str-based) so the member
