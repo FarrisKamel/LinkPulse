@@ -36,9 +36,12 @@ function Sidebar({ open, onClose }: SidebarProps) {
 
       <aside
         className={[
+          // Mobile: display:none when closed removes the links from the tab
+          // order and a11y tree entirely (translate-off-screen would leave
+          // them keyboard-focusable). Always a static column on md+.
+          open ? 'block' : 'hidden',
           'fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white p-4',
-          'transition-transform duration-200 md:static md:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full',
+          'md:static md:block',
         ].join(' ')}
       >
         <div className="mb-6 px-3 text-lg font-bold text-indigo-600">
