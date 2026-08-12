@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import BookmarkCard from '../components/BookmarkCard'
 import { useBookmarks } from '../hooks/useBookmarks'
@@ -28,6 +28,14 @@ function BookmarksPage() {
   const total = data?.total ?? 0
   const hasPages = total > PAGE_SIZE
 
+  // If the current page is past the end (e.g. deletions shrank the total),
+  // clamp back to the last valid page instead of showing an empty grid.
+  useEffect(() => {
+    if (data && total > 0 && offset >= total) {
+      setOffset(Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE)
+    }
+  }, [data, total, offset])
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-800">Bookmarks</h1>
@@ -53,7 +61,7 @@ function BookmarksPage() {
         </div>
       )}
 
-      {data && data.items.length === 0 && (
+      {data && total === 0 && (
         <div className="mt-6 rounded-lg border border-dashed border-slate-300 p-10 text-center">
           <p className="font-medium text-slate-700">No bookmarks yet</p>
           <p className="mt-1 text-sm text-slate-500">
