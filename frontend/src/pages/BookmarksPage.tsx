@@ -31,9 +31,20 @@ function BookmarksPage() {
   const [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState<Bookmark | null>(null)
 
+  // Reset to the first page the instant filters change. Done during render
+  // (React's "adjust state on change" pattern) so the query below never fires
+  // with new filters and a stale offset.
+  const filterKey = `${search}|${tag}|${String(starred)}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setOffset(0)
+  }
+  const currentOffset = filterKey === prevFilterKey ? offset : 0
+
   const { data, isPending, isError, refetch } = useBookmarks({
     limit: PAGE_SIZE,
-    offset,
+    offset: currentOffset,
     search: search || undefined,
     tag: tag || undefined,
     starred: starred || undefined,
@@ -42,17 +53,12 @@ function BookmarksPage() {
   const total = data?.total ?? 0
   const hasPages = total > PAGE_SIZE
 
-  // Any filter change resets to the first page.
+  // Clamp a page that fell past the end (e.g. deletions shrank the total).
   useEffect(() => {
-    setOffset(0)
-  }, [search, tag, starred])
-
-  // Clamp a page that fell past the end (e.g. filters/deletions shrank total).
-  useEffect(() => {
-    if (data && total > 0 && offset >= total) {
+    if (data && total > 0 && currentOffset >= total) {
       setOffset(Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE)
     }
-  }, [data, total, offset])
+  }, [data, total, currentOffset])
 
   function setParam(key: string, value: string) {
     setSearchParams((prev) => {
@@ -153,13 +159,13 @@ function BookmarksPage() {
           {hasPages && (
             <div className="mt-6 flex items-center justify-between text-sm text-slate-600">
               <span>
-                Showing {offset + 1}&ndash;{Math.min(offset + PAGE_SIZE, total)}{' '}
-                of {total}
+                Showing {currentOffset + 1}&ndash;
+                {Math.min(currentOffset + PAGE_SIZE, total)} of {total}
               </span>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  disabled={offset === 0}
+                  disabled={currentOffset === 0}
                   onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
                   className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium disabled:opacity-40 enabled:hover:bg-slate-100"
                 >
@@ -167,7 +173,7 @@ function BookmarksPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={offset + PAGE_SIZE >= total}
+                  disabled={currentOffset + PAGE_SIZE >= total}
                   onClick={() => setOffset((o) => o + PAGE_SIZE)}
                   className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium disabled:opacity-40 enabled:hover:bg-slate-100"
                 >

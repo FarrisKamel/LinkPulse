@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 
 interface TopBarProps {
@@ -10,12 +10,17 @@ interface TopBarProps {
 
 function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [term, setTerm] = useState(searchParams.get('search') ?? '')
+  const urlSearch = searchParams.get('search') ?? ''
+  const [term, setTerm] = useState(urlSearch)
+  // Tracks the last value we wrote to the URL, so the sync-from-URL effect
+  // below can tell an external navigation apart from our own debounced write.
+  const lastWritten = useRef(urlSearch)
 
   // Debounce: push the term into the URL's ?search= 300ms after typing stops,
   // so the bookmark query isn't refetched on every keystroke.
   useEffect(() => {
     const id = setTimeout(() => {
+      lastWritten.current = term
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev)
@@ -28,6 +33,15 @@ function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
     }, 300)
     return () => clearTimeout(id)
   }, [term, setSearchParams])
+
+  // Keep the input in sync when the URL changes externally (back/forward).
+  // Guarded by lastWritten so in-progress typing isn't clobbered.
+  useEffect(() => {
+    if (urlSearch !== lastWritten.current) {
+      lastWritten.current = urlSearch
+      setTerm(urlSearch)
+    }
+  }, [urlSearch])
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
