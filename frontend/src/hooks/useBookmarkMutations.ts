@@ -8,10 +8,11 @@ import {
   updateBookmark,
 } from '../api/bookmarks'
 
-// Bookmark writes can change tags and their counts, so refresh both lists.
+// Bookmark writes affect the list, tag counts, and dashboard stats.
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
   queryClient.invalidateQueries({ queryKey: ['tags'] })
+  queryClient.invalidateQueries({ queryKey: ['stats'] })
 }
 
 export function usePreviewBookmark() {

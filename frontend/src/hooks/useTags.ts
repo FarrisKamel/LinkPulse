@@ -6,10 +6,11 @@ export function useTags() {
   return useQuery({ queryKey: ['tags'], queryFn: fetchTags, staleTime: 30_000 })
 }
 
-// Tag changes can affect bookmark tag chips too, so invalidate both.
+// Tag changes affect bookmark chips and dashboard stats too.
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ['tags'] })
   queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
+  queryClient.invalidateQueries({ queryKey: ['stats'] })
 }
 
 export function useCreateTag() {
