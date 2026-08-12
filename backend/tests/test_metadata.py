@@ -1,6 +1,16 @@
 import pytest
 
-from app.services.metadata import _host_is_safe, parse_metadata
+from app.services.metadata import (
+    StubMetadataFetcher,
+    _host_is_safe,
+    parse_metadata,
+)
+
+
+async def test_stub_fetcher_is_deterministic_and_offline() -> None:
+    meta = await StubMetadataFetcher().fetch("https://example.com/path")
+    assert meta.title == "Site: example.com"
+    assert meta.description == "Preview for example.com"
 
 
 @pytest.mark.parametrize(

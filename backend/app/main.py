@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 
+from app.config import settings
 from app.routers import bookmarks
 
 app = FastAPI(title="LinkPulse API")
 
 app.include_router(bookmarks.router)
+
+# Test-only DB reset endpoint, mounted only when explicitly enabled.
+if settings.testing:
+    from app.routers import testing
+
+    app.include_router(testing.router)
 
 
 @app.get("/api/health")
