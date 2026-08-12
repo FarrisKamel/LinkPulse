@@ -18,7 +18,10 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
   const [tagInput, setTagInput] = useState('')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  const update = useUpdateBookmark()
+  // Separate mutation instances so a star toggle can't clear a failed save's
+  // error state (they'd share isError/isPending if it were one instance).
+  const save = useUpdateBookmark()
+  const star = useUpdateBookmark()
   const remove = useDeleteBookmark()
 
   useEffect(() => {
@@ -30,10 +33,10 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
   }, [onClose])
 
   function toggleStar() {
-    if (update.isPending) return // avoid overlapping, out-of-order updates
+    if (star.isPending) return // avoid overlapping, out-of-order updates
     const next = !starred
     setStarred(next)
-    update.mutate(
+    star.mutate(
       { id: bookmark.id, patch: { is_starred: next } },
       { onError: () => setStarred(!next) }, // revert optimistic change on failure
     )
@@ -58,7 +61,7 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
       pending && !tags.includes(pending) ? [...tags, pending] : tags
     setTags(finalTags)
     setTagInput('')
-    update.mutate({ id: bookmark.id, patch: { notes, tags: finalTags } })
+    save.mutate({ id: bookmark.id, patch: { notes, tags: finalTags } })
   }
 
   function handleDelete() {
@@ -116,7 +119,7 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
               <button
                 type="button"
                 onClick={toggleStar}
-                disabled={update.isPending}
+                disabled={star.isPending}
                 aria-label={starred ? 'Unstar' : 'Star'}
                 className={starred ? 'text-amber-400' : 'text-slate-300'}
               >
@@ -201,7 +204,7 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
         </div>
 
         <footer className="space-y-3 border-t border-slate-200 px-5 py-4">
-          {update.isError && (
+          {save.isError && (
             <p className="text-sm text-red-600">
               Couldn't save changes. Please try again.
             </p>
@@ -217,10 +220,10 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
             <button
               type="button"
               onClick={handleSave}
-              disabled={update.isPending}
+              disabled={save.isPending}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
             >
-              {update.isPending ? 'Saving…' : 'Save'}
+              {save.isPending ? 'Saving…' : 'Save'}
             </button>
           </div>
 
