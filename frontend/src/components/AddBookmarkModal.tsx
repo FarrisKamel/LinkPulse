@@ -55,10 +55,13 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
     )
   }
 
-  // Only show the preview while it still matches the URL in the field — a
-  // late in-flight response for an old URL must not render against a new one.
+  // Show the preview only when it's settled AND still matches the URL in the
+  // field. Hiding it while a fetch is in flight prevents a previous result
+  // from briefly rendering against the new URL.
   const meta =
-    preview.data && fetchedUrl === url.trim() ? preview.data : null
+    preview.data && !preview.isPending && fetchedUrl === url.trim()
+      ? preview.data
+      : null
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
