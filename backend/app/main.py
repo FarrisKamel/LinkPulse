@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 
+from app.routers import bookmarks
+
 app = FastAPI(title="LinkPulse API")
+
+app.include_router(bookmarks.router)
 
 
 @app.get("/api/health")
