@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import ColumnElement, func, or_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -51,21 +52,24 @@ async def _load_with_tags(
 
 
 async def _resolve_tags(session: AsyncSession, names: list[str]) -> list[Tag]:
-    """Map tag names to Tag rows, creating any that don't exist yet
-    (get-or-create). Order preserved; blanks and duplicates dropped."""
-    resolved: list[Tag] = []
-    seen: set[str] = set()
-    for raw in names:
-        name = raw.strip()
-        if not name or name in seen:
-            continue
-        seen.add(name)
-        tag = await session.scalar(select(Tag).where(Tag.name == name))
-        if tag is None:
-            tag = Tag(name=name)
-            session.add(tag)
-        resolved.append(tag)
-    return resolved
+    """Map tag names to Tag rows, creating any that don't exist yet.
+
+    Uses INSERT ... ON CONFLICT DO NOTHING so concurrent requests introducing
+    the same new tag can't collide on the unique(name) constraint (Greptile P1,
+    PR #9). Order preserved; blanks and duplicates dropped."""
+    cleaned = list(dict.fromkeys(n.strip() for n in names if n.strip()))
+    if not cleaned:
+        return []
+
+    # Atomic get-or-create: rows that already exist are skipped, not errored.
+    await session.execute(
+        pg_insert(Tag)
+        .values([{"name": name} for name in cleaned])
+        .on_conflict_do_nothing(index_elements=["name"])
+    )
+    rows = await session.scalars(select(Tag).where(Tag.name.in_(cleaned)))
+    by_name = {tag.name: tag for tag in rows}
+    return [by_name[name] for name in cleaned]
 
 
 @router.post("", response_model=BookmarkRead, status_code=status.HTTP_201_CREATED)
