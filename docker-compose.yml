@@ -59,6 +59,10 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    environment:
+      # Inside the compose network the backend is reachable as `backend`, not
+      # localhost. Vite's dev proxy reads this to forward /api correctly.
+      VITE_API_PROXY_TARGET: http://backend:8000
     ports:
       - "5173:5173"
     volumes:

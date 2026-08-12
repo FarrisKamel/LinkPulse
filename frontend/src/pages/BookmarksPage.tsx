@@ -1,7 +1,10 @@
+import { useState } from 'react'
+
 import BookmarkCard from '../components/BookmarkCard'
 import { useBookmarks } from '../hooks/useBookmarks'
 
 const GRID = 'mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
+const PAGE_SIZE = 20
 
 function CardSkeleton() {
   return (
@@ -16,7 +19,14 @@ function CardSkeleton() {
 }
 
 function BookmarksPage() {
-  const { data, isPending, isError, refetch } = useBookmarks()
+  const [offset, setOffset] = useState(0)
+  const { data, isPending, isError, refetch } = useBookmarks({
+    limit: PAGE_SIZE,
+    offset,
+  })
+
+  const total = data?.total ?? 0
+  const hasPages = total > PAGE_SIZE
 
   return (
     <div>
@@ -53,11 +63,40 @@ function BookmarksPage() {
       )}
 
       {data && data.items.length > 0 && (
-        <div className={GRID}>
-          {data.items.map((bookmark) => (
-            <BookmarkCard key={bookmark.id} bookmark={bookmark} />
-          ))}
-        </div>
+        <>
+          <div className={GRID}>
+            {data.items.map((bookmark) => (
+              <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+            ))}
+          </div>
+
+          {hasPages && (
+            <div className="mt-6 flex items-center justify-between text-sm text-slate-600">
+              <span>
+                Showing {offset + 1}&ndash;{Math.min(offset + PAGE_SIZE, total)}{' '}
+                of {total}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={offset === 0}
+                  onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium disabled:opacity-40 enabled:hover:bg-slate-100"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={offset + PAGE_SIZE >= total}
+                  onClick={() => setOffset((o) => o + PAGE_SIZE)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium disabled:opacity-40 enabled:hover:bg-slate-100"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

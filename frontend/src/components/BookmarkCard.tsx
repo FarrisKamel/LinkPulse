@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { Bookmark } from '../types'
 
@@ -27,6 +27,11 @@ interface BookmarkCardProps {
 
 function BookmarkCard({ bookmark }: BookmarkCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
+  // Recover if the image URL changes (e.g. after an edit) — a stale failure
+  // from a previous URL shouldn't keep hiding a now-valid thumbnail.
+  useEffect(() => {
+    setImageFailed(false)
+  }, [bookmark.og_image_url])
   const title = bookmark.title || bookmark.domain || bookmark.url
   const fallbackChar = (bookmark.domain || bookmark.url).charAt(0).toUpperCase()
   const showImage = bookmark.og_image_url && !imageFailed

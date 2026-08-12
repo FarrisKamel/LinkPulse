@@ -73,3 +73,15 @@ test('shows the error state when the request fails', async () => {
   renderPage()
   expect(await screen.findByText(/couldn't load bookmarks/i)).toBeTruthy()
 })
+
+test('shows pagination controls when there is more than one page', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () =>
+      jsonResponse({ items: [SAMPLE], total: 25, limit: 20, offset: 0 }),
+    ),
+  )
+  renderPage()
+  expect(await screen.findByRole('button', { name: 'Next' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Previous' })).toBeTruthy()
+})
