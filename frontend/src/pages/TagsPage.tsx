@@ -1,6 +1,5 @@
 import { type FormEvent, useState } from 'react'
 
-import { useToast } from '../components/Toast'
 import {
   useCreateTag,
   useDeleteTag,
@@ -10,9 +9,8 @@ import {
 import type { TagWithCount } from '../types'
 
 function TagRow({ tag }: { tag: TagWithCount }) {
-  const update = useUpdateTag()
-  const remove = useDeleteTag()
-  const toast = useToast()
+  const update = useUpdateTag({ successMessage: 'Tag updated' })
+  const remove = useDeleteTag({ successMessage: 'Tag deleted' })
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tag.name)
   const [color, setColor] = useState(tag.color)
@@ -22,12 +20,7 @@ function TagRow({ tag }: { tag: TagWithCount }) {
     if (!name.trim()) return
     update.mutate(
       { id: tag.id, patch: { name: name.trim(), color } },
-      {
-        onSuccess: () => {
-          setEditing(false)
-          toast.notify('Tag updated')
-        },
-      },
+      { onSuccess: () => setEditing(false) },
     )
   }
 
@@ -98,11 +91,7 @@ function TagRow({ tag }: { tag: TagWithCount }) {
             Delete?
             <button
               type="button"
-              onClick={() =>
-                remove.mutate(tag.id, {
-                  onSuccess: () => toast.notify('Tag deleted'),
-                })
-              }
+              onClick={() => remove.mutate(tag.id)}
               disabled={remove.isPending}
               className="font-semibold disabled:opacity-40"
             >
@@ -132,8 +121,7 @@ function TagRow({ tag }: { tag: TagWithCount }) {
 
 function TagsPage() {
   const { data: tags, isPending, isError } = useTags()
-  const create = useCreateTag()
-  const toast = useToast()
+  const create = useCreateTag({ successMessage: 'Tag created' })
   const [name, setName] = useState('')
   const [color, setColor] = useState('#6366f1')
 
@@ -146,7 +134,6 @@ function TagsPage() {
         onSuccess: () => {
           setName('')
           setColor('#6366f1')
-          toast.notify('Tag created')
         },
       },
     )

@@ -5,7 +5,6 @@ import {
   useUpdateBookmark,
 } from '../hooks/useBookmarkMutations'
 import type { Bookmark } from '../types'
-import { useToast } from './Toast'
 
 interface BookmarkDetailDrawerProps {
   bookmark: Bookmark
@@ -21,10 +20,15 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
 
   // Separate mutation instances so a star toggle can't clear a failed save's
   // error state (they'd share isError/isPending if it were one instance).
-  const save = useUpdateBookmark()
+  const save = useUpdateBookmark({
+    successMessage: 'Changes saved',
+    errorMessage: "Couldn't save changes",
+  })
   const star = useUpdateBookmark()
-  const remove = useDeleteBookmark()
-  const toast = useToast()
+  const remove = useDeleteBookmark({
+    successMessage: 'Bookmark deleted',
+    errorMessage: "Couldn't delete bookmark",
+  })
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -63,23 +67,11 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
       pending && !tags.includes(pending) ? [...tags, pending] : tags
     setTags(finalTags)
     setTagInput('')
-    save.mutate(
-      { id: bookmark.id, patch: { notes, tags: finalTags } },
-      {
-        onSuccess: () => toast.notify('Changes saved'),
-        onError: () => toast.notify("Couldn't save changes", 'error'),
-      },
-    )
+    save.mutate({ id: bookmark.id, patch: { notes, tags: finalTags } })
   }
 
   function handleDelete() {
-    remove.mutate(bookmark.id, {
-      onSuccess: () => {
-        toast.notify('Bookmark deleted')
-        onClose()
-      },
-      onError: () => toast.notify("Couldn't delete bookmark", 'error'),
-    })
+    remove.mutate(bookmark.id, { onSuccess: onClose })
   }
 
   return (

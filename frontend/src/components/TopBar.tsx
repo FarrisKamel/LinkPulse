@@ -21,6 +21,8 @@ function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        // Don't pull focus out of an open modal/drawer.
+        if (document.querySelector('[aria-modal="true"]')) return
         e.preventDefault()
         inputRef.current?.focus()
       }

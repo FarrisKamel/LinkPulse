@@ -4,7 +4,6 @@ import {
   useCreateBookmark,
   usePreviewBookmark,
 } from '../hooks/useBookmarkMutations'
-import { useToast } from './Toast'
 
 interface AddBookmarkModalProps {
   onClose: () => void
@@ -18,8 +17,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
   const urlRef = useRef<HTMLInputElement>(null)
 
   const preview = usePreviewBookmark()
-  const create = useCreateBookmark()
-  const toast = useToast()
+  const create = useCreateBookmark({ successMessage: 'Bookmark added' })
 
   useEffect(() => {
     urlRef.current?.focus()
@@ -51,15 +49,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
     const pending = tagInput.trim()
     const finalTags =
       pending && !tags.includes(pending) ? [...tags, pending] : tags
-    create.mutate(
-      { url: url.trim(), tags: finalTags },
-      {
-        onSuccess: () => {
-          toast.notify('Bookmark added')
-          onClose()
-        },
-      },
-    )
+    create.mutate({ url: url.trim(), tags: finalTags }, { onSuccess: onClose })
   }
 
   // Show the preview only when it's settled AND still matches the URL in the
