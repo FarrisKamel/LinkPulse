@@ -15,6 +15,21 @@ function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
   // Tracks the last value we wrote to the URL, so the sync-from-URL effect
   // below can tell an external navigation apart from our own debounced write.
   const lastWritten = useRef(urlSearch)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Cmd/Ctrl+K focuses the search box.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        // Don't pull focus out of an open modal/drawer.
+        if (document.querySelector('[aria-modal="true"]')) return
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Debounce: push the term into the URL's ?search= 300ms after typing stops,
   // so the bookmark query isn't refetched on every keystroke.
@@ -63,10 +78,11 @@ function TopBar({ onMenuClick, onAddClick }: TopBarProps) {
       </button>
 
       <input
+        ref={inputRef}
         type="search"
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder="Search bookmarks…"
+        placeholder="Search bookmarks…  (⌘K)"
         className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
       />
 

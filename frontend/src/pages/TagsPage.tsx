@@ -9,8 +9,8 @@ import {
 import type { TagWithCount } from '../types'
 
 function TagRow({ tag }: { tag: TagWithCount }) {
-  const update = useUpdateTag()
-  const remove = useDeleteTag()
+  const update = useUpdateTag({ successMessage: 'Tag updated' })
+  const remove = useDeleteTag({ successMessage: 'Tag deleted' })
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tag.name)
   const [color, setColor] = useState(tag.color)
@@ -121,7 +121,7 @@ function TagRow({ tag }: { tag: TagWithCount }) {
 
 function TagsPage() {
   const { data: tags, isPending, isError } = useTags()
-  const create = useCreateTag()
+  const create = useCreateTag({ successMessage: 'Tag created' })
   const [name, setName] = useState('')
   const [color, setColor] = useState('#6366f1')
 

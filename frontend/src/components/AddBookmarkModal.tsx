@@ -17,7 +17,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
   const urlRef = useRef<HTMLInputElement>(null)
 
   const preview = usePreviewBookmark()
-  const create = useCreateBookmark()
+  const create = useCreateBookmark({ successMessage: 'Bookmark added' })
 
   useEffect(() => {
     urlRef.current?.focus()
@@ -49,10 +49,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
     const pending = tagInput.trim()
     const finalTags =
       pending && !tags.includes(pending) ? [...tags, pending] : tags
-    create.mutate(
-      { url: url.trim(), tags: finalTags },
-      { onSuccess: onClose },
-    )
+    create.mutate({ url: url.trim(), tags: finalTags }, { onSuccess: onClose })
   }
 
   // Show the preview only when it's settled AND still matches the URL in the
@@ -76,7 +73,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-bookmark-title"
-        className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+        className="animate-fade-in relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
       >
         <h2
           id="add-bookmark-title"

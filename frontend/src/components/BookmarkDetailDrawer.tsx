@@ -20,9 +20,15 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
 
   // Separate mutation instances so a star toggle can't clear a failed save's
   // error state (they'd share isError/isPending if it were one instance).
-  const save = useUpdateBookmark()
+  const save = useUpdateBookmark({
+    successMessage: 'Changes saved',
+    errorMessage: "Couldn't save changes",
+  })
   const star = useUpdateBookmark()
-  const remove = useDeleteBookmark()
+  const remove = useDeleteBookmark({
+    successMessage: 'Bookmark deleted',
+    errorMessage: "Couldn't delete bookmark",
+  })
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -74,14 +80,14 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
         type="button"
         aria-label="Close details"
         onClick={onClose}
-        className="fixed inset-0 bg-slate-900/40"
+        className="animate-fade-in fixed inset-0 bg-slate-900/40"
       />
 
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="Bookmark details"
-        className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl"
+        className="animate-slide-in-right relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl"
       >
         <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">Details</h2>
