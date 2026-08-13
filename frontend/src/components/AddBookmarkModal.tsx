@@ -4,6 +4,7 @@ import {
   useCreateBookmark,
   usePreviewBookmark,
 } from '../hooks/useBookmarkMutations'
+import { useToast } from './Toast'
 
 interface AddBookmarkModalProps {
   onClose: () => void
@@ -18,6 +19,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
 
   const preview = usePreviewBookmark()
   const create = useCreateBookmark()
+  const toast = useToast()
 
   useEffect(() => {
     urlRef.current?.focus()
@@ -51,7 +53,12 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
       pending && !tags.includes(pending) ? [...tags, pending] : tags
     create.mutate(
       { url: url.trim(), tags: finalTags },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          toast.notify('Bookmark added')
+          onClose()
+        },
+      },
     )
   }
 
@@ -76,7 +83,7 @@ function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-bookmark-title"
-        className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+        className="animate-fade-in relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
       >
         <h2
           id="add-bookmark-title"

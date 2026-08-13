@@ -5,6 +5,7 @@ import {
   useUpdateBookmark,
 } from '../hooks/useBookmarkMutations'
 import type { Bookmark } from '../types'
+import { useToast } from './Toast'
 
 interface BookmarkDetailDrawerProps {
   bookmark: Bookmark
@@ -23,6 +24,7 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
   const save = useUpdateBookmark()
   const star = useUpdateBookmark()
   const remove = useDeleteBookmark()
+  const toast = useToast()
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -61,11 +63,23 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
       pending && !tags.includes(pending) ? [...tags, pending] : tags
     setTags(finalTags)
     setTagInput('')
-    save.mutate({ id: bookmark.id, patch: { notes, tags: finalTags } })
+    save.mutate(
+      { id: bookmark.id, patch: { notes, tags: finalTags } },
+      {
+        onSuccess: () => toast.notify('Changes saved'),
+        onError: () => toast.notify("Couldn't save changes", 'error'),
+      },
+    )
   }
 
   function handleDelete() {
-    remove.mutate(bookmark.id, { onSuccess: onClose })
+    remove.mutate(bookmark.id, {
+      onSuccess: () => {
+        toast.notify('Bookmark deleted')
+        onClose()
+      },
+      onError: () => toast.notify("Couldn't delete bookmark", 'error'),
+    })
   }
 
   return (
@@ -74,14 +88,14 @@ function BookmarkDetailDrawer({ bookmark, onClose }: BookmarkDetailDrawerProps) 
         type="button"
         aria-label="Close details"
         onClick={onClose}
-        className="fixed inset-0 bg-slate-900/40"
+        className="animate-fade-in fixed inset-0 bg-slate-900/40"
       />
 
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="Bookmark details"
-        className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl"
+        className="animate-slide-in-right relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl"
       >
         <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">Details</h2>
