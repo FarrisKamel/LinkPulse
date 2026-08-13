@@ -84,3 +84,12 @@ jobs:
           name: playwright-report
           path: e2e/playwright-report/
           retention-days: 7
+
+  prod-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Build the production images so a Dockerfile.prod / nginx regression is
+      # caught in CI (the e2e stack uses the dev images).
+      - name: Build production images
+        run: docker compose -f docker-compose.prod.yml build
