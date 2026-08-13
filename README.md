@@ -143,6 +143,20 @@ curl -X PATCH localhost:8000/api/bookmarks/{id} \
 Duplicate URLs return `409`; unreachable URLs are saved with the URL only;
 invalid input returns `422`.
 
+## Production
+
+`docker-compose.prod.yml` runs a production-style stack: the frontend is
+compiled (`vite build`) and served by nginx — which also reverse-proxies
+`/api` to the backend — the backend runs without hot-reload, and the database
+uses a persistent volume.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build   # app on :8080
+```
+
+This stack is host-agnostic (Railway, Fly, a VM, etc.) — point `DATABASE_URL`
+at a managed Postgres and set strong `POSTGRES_*` credentials.
+
 ## Development workflow
 
 - Branch per change (`feat/…`), open a PR against `main` (protected).
